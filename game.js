@@ -7,7 +7,15 @@ const Languages = {
         startGame: "НАЧАТЬ ИГРУ",
         missions: "ЗАДАНИЯ",
         shop: "МАГАЗИН",
-        moneyButton: "💰 +80М ОЧКОВ",
+        moneyButton: "💰 +30М ОЧКОВ",
+        moneyButton15m: "💰 +15М ОЧКОВ",
+        moneyButton5m: "💰 +5М ОЧКОВ",
+        moneyButton1m: "💰 +1М ОЧКОВ",
+        moneyButton987k: "💰 +987К ОЧКОВ",
+        moneyButton700k: "💰 +700К ОЧКОВ",
+        moneyButton651k: "💰 +651К ОЧКОВ",
+        moneyButton400k: "💰 +400К ОЧКОВ",
+        moneyButton137k: "💰 +137К ОЧКОВ",
         language: "🌐 ЯЗЫК",
         back: "НАЗАД",
         ammo: "Патроны:",
@@ -92,7 +100,15 @@ const Languages = {
         price: "Цена:",
         buy: "Купить",
         limitInfo: "Можно купить только 3 раза с перерывом в 5 дней",
-        moneyReceived: "Получено 80 миллионов очков!"
+        moneyReceived: "Получено 30 миллионов очков!",
+        moneyReceived15m: "Получено 15 миллионов очков!",
+        moneyReceived5m: "Получено 5 миллионов очков!",
+        moneyReceived1m: "Получено 1 миллион очков!",
+        moneyReceived987k: "Получено 987 тысяч очков!",
+        moneyReceived700k: "Получено 700 тысяч очков!",
+        moneyReceived651k: "Получено 651 тысяча очков!",
+        moneyReceived400k: "Получено 400 тысяч очков!",
+        moneyReceived137k: "Получено 137 тысяч очков!"
     },
     en: {
         title: "BULLSTRIKE",
@@ -101,7 +117,15 @@ const Languages = {
         startGame: "START GAME",
         missions: "MISSIONS",
         shop: "SHOP",
-        moneyButton: "💰 +80M POINTS",
+        moneyButton: "💰 +30M POINTS",
+        moneyButton15m: "💰 +15M POINTS",
+        moneyButton5m: "💰 +5M POINTS",
+        moneyButton1m: "💰 +1M POINTS",
+        moneyButton987k: "💰 +987K POINTS",
+        moneyButton700k: "💰 +700K POINTS",
+        moneyButton651k: "💰 +651K POINTS",
+        moneyButton400k: "💰 +400K POINTS",
+        moneyButton137k: "💰 +137K POINTS",
         language: "🌐 LANGUAGE",
         back: "BACK",
         ammo: "Ammo:",
@@ -186,7 +210,15 @@ const Languages = {
         price: "Price:",
         buy: "Buy",
         limitInfo: "Can only be purchased 3 times with a 5-day cooldown",
-        moneyReceived: "Received 80 million points!"
+        moneyReceived: "Received 30 million points!",
+        moneyReceived15m: "Received 15 million points!",
+        moneyReceived5m: "Received 5 million points!",
+        moneyReceived1m: "Received 1 million points!",
+        moneyReceived987k: "Received 987 thousand points!",
+        moneyReceived700k: "Received 700 thousand points!",
+        moneyReceived651k: "Received 651 thousand points!",
+        moneyReceived400k: "Received 400 thousand points!",
+        moneyReceived137k: "Received 137 thousand points!"
     },
     ja: {
         title: "ブルストライク",
@@ -195,7 +227,15 @@ const Languages = {
         startGame: "ゲーム開始",
         missions: "ミッション",
         shop: "ショップ",
-        moneyButton: "💰 +80M ポイント",
+        moneyButton: "💰 +30M ポイント",
+        moneyButton15m: "💰 +15M ポイント",
+        moneyButton5m: "💰 +5M ポイント",
+        moneyButton1m: "💰 +1M ポイント",
+        moneyButton987k: "💰 +987K ポイント",
+        moneyButton700k: "💰 +700K ポイント",
+        moneyButton651k: "💰 +651K ポイント",
+        moneyButton400k: "💰 +400K ポイント",
+        moneyButton137k: "💰 +137K ポイント",
         language: "🌐 言語",
         back: "戻る",
         ammo: "弾薬:",
@@ -280,7 +320,15 @@ const Languages = {
         price: "価格:",
         buy: "購入",
         limitInfo: "5日間のクールダウンで3回まで購入可能",
-        moneyReceived: "8000万ポイントを獲得しました！"
+        moneyReceived: "3000万ポイントを獲得しました！",
+        moneyReceived15m: "1500万ポイントを獲得しました！",
+        moneyReceived5m: "500万ポイントを獲得しました！",
+        moneyReceived1m: "100万ポイントを獲得しました！",
+        moneyReceived987k: "98万7000ポイントを獲得しました！",
+        moneyReceived700k: "70万ポイントを獲得しました！",
+        moneyReceived651k: "65万1000ポイントを獲得しました！",
+        moneyReceived400k: "40万ポイントを獲得しました！",
+        moneyReceived137k: "13万7000ポイントを獲得しました！"
     }
 };
 
@@ -305,6 +353,14 @@ function changeLanguage(lang) {
     document.getElementById('missions-btn').textContent = langData.missions;
     document.getElementById('shop-btn').textContent = langData.shop;
     document.getElementById('money-btn').textContent = langData.moneyButton;
+    document.getElementById('money-btn-15m').textContent = langData.moneyButton15m;
+    document.getElementById('money-btn-5m').textContent = langData.moneyButton5m;
+    document.getElementById('money-btn-1m').textContent = langData.moneyButton1m;
+    document.getElementById('money-btn-987k').textContent = langData.moneyButton987k;
+    document.getElementById('money-btn-700k').textContent = langData.moneyButton700k;
+    document.getElementById('money-btn-651k').textContent = langData.moneyButton651k;
+    document.getElementById('money-btn-400k').textContent = langData.moneyButton400k;
+    document.getElementById('money-btn-137k').textContent = langData.moneyButton137k;
     document.getElementById('language-btn').textContent = langData.language;
     
     // Обновляем экран выбора языка
@@ -1387,10 +1443,91 @@ window.addEventListener('load', () => {
     const moneyBtn = document.getElementById('money-btn');
     if (moneyBtn) {
         moneyBtn.addEventListener('click', () => {
-            GameData.totalScore += 80000000;
+            GameData.totalScore += 30000000;
             GameData.save();
             GameData.updateUI();
             alert(Languages[currentLanguage].moneyReceived);
+        });
+    }
+    
+    // Event listeners for new money buttons
+    const moneyBtn15m = document.getElementById('money-btn-15m');
+    if (moneyBtn15m) {
+        moneyBtn15m.addEventListener('click', () => {
+            GameData.totalScore += 15000000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived15m);
+        });
+    }
+    
+    const moneyBtn5m = document.getElementById('money-btn-5m');
+    if (moneyBtn5m) {
+        moneyBtn5m.addEventListener('click', () => {
+            GameData.totalScore += 5000000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived5m);
+        });
+    }
+    
+    const moneyBtn1m = document.getElementById('money-btn-1m');
+    if (moneyBtn1m) {
+        moneyBtn1m.addEventListener('click', () => {
+            GameData.totalScore += 1000000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived1m);
+        });
+    }
+    
+    const moneyBtn987k = document.getElementById('money-btn-987k');
+    if (moneyBtn987k) {
+        moneyBtn987k.addEventListener('click', () => {
+            GameData.totalScore += 987000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived987k);
+        });
+    }
+    
+    const moneyBtn700k = document.getElementById('money-btn-700k');
+    if (moneyBtn700k) {
+        moneyBtn700k.addEventListener('click', () => {
+            GameData.totalScore += 700000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived700k);
+        });
+    }
+    
+    const moneyBtn651k = document.getElementById('money-btn-651k');
+    if (moneyBtn651k) {
+        moneyBtn651k.addEventListener('click', () => {
+            GameData.totalScore += 651000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived651k);
+        });
+    }
+    
+    const moneyBtn400k = document.getElementById('money-btn-400k');
+    if (moneyBtn400k) {
+        moneyBtn400k.addEventListener('click', () => {
+            GameData.totalScore += 400000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived400k);
+        });
+    }
+    
+    const moneyBtn137k = document.getElementById('money-btn-137k');
+    if (moneyBtn137k) {
+        moneyBtn137k.addEventListener('click', () => {
+            GameData.totalScore += 137000;
+            GameData.save();
+            GameData.updateUI();
+            alert(Languages[currentLanguage].moneyReceived137k);
         });
     }
     
