@@ -631,6 +631,13 @@ class ZombieShooter {
         this.zombiesKilled = 0;
         this.trees = [];
         this.rocks = [];
+        // Параметры мира и коллизий
+        this.worldSize = 400; // Размер карты по X и Z
+        this.halfWorld = this.worldSize / 2;
+        this.playerRadius = 0.6; // Условный радиус игрока для коллизий
+        this.boundaryMargin = 1.0; // Отступ от границы, чтобы не застревать в стене
+        this.noSpawnRadius = 12; // Радиус вокруг игрока, где зомби не спаунятся
+        this.obstacles = []; // Единый список препятствий с радиусами коллизий
         
         // Переменные для новых заданий
         this.consecutiveKills = 0;
@@ -665,7 +672,7 @@ class ZombieShooter {
     
     setupScene() {
         // Создание неба
-        const skyGeometry = new THREE.SphereGeometry(50, 32, 32);
+        const skyGeometry = new THREE.SphereGeometry(this.worldSize * 1.5, 32, 32);
         const skyMaterial = new THREE.MeshBasicMaterial({
             color: 0x87CEEB,
             side: THREE.BackSide
@@ -674,7 +681,7 @@ class ZombieShooter {
         this.scene.add(sky);
 
         // Создание пола с текстурой
-        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorGeometry = new THREE.PlaneGeometry(this.worldSize, this.worldSize);
         const floorMaterial = new THREE.MeshStandardMaterial({
             map: this.groundTexture || null,
             roughness: 0.8,
@@ -685,7 +692,7 @@ class ZombieShooter {
         this.scene.add(this.floor);
         
         // Создание ландшафта (темно-зеленые прямоугольники)
-        const terrainGeometry = new THREE.PlaneGeometry(20, 20);
+        const terrainGeometry = new THREE.PlaneGeometry(30, 30);
         const terrainMaterial = new THREE.MeshStandardMaterial({
             color: 0x1a472a,
             roughness: 0.9
@@ -693,66 +700,120 @@ class ZombieShooter {
         
         // Первая база
         const base1 = new THREE.Mesh(terrainGeometry, terrainMaterial);
-        base1.position.set(-15, 0.1, -15);
+        base1.position.set(-this.halfWorld + 30, 0.1, -this.halfWorld + 30);
         base1.rotation.x = -Math.PI / 2;
         this.scene.add(base1);
         
         // Вторая база
         const base2 = new THREE.Mesh(terrainGeometry, terrainMaterial);
-        base2.position.set(15, 0.1, 15);
+        base2.position.set(this.halfWorld - 30, 0.1, this.halfWorld - 30);
         base2.rotation.x = -Math.PI / 2;
         this.scene.add(base2);
 
-        // Добавление деревьев
-        for (let i = 0; i < 20; i++) {
-            // Создаем группу для дерева
+        // Периметр: визуальные низкие стены по краям карты
+        const wallHeight = 1.5;
+        const wallThickness = 0.5;
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.9 });
+        // Север/Юг
+        const northWall = new THREE.Mesh(new THREE.BoxGeometry(this.worldSize, wallHeight, wallThickness), wallMaterial);
+        northWall.position.set(0, wallHeight / 2, -this.halfWorld + wallThickness / 2);
+        const southWall = new THREE.Mesh(new THREE.BoxGeometry(this.worldSize, wallHeight, wallThickness), wallMaterial);
+        southWall.position.set(0, wallHeight / 2, this.halfWorld - wallThickness / 2);
+        // Запад/Восток
+        const westWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, this.worldSize), wallMaterial);
+        westWall.position.set(-this.halfWorld + wallThickness / 2, wallHeight / 2, 0);
+        const eastWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, this.worldSize), wallMaterial);
+        eastWall.position.set(this.halfWorld - wallThickness / 2, wallHeight / 2, 0);
+        this.scene.add(northWall, southWall, westWall, eastWall);
+
+        // Вспомогательная функция добавления препятствий с радиусом коллизии
+        const addObstacle = (mesh, radius) => {
+            mesh.userData.collisionRadius = radius;
+            this.scene.add(mesh);
+            this.obstacles.push(mesh);
+        };
+
+        // Зоны, где не размещаем объекты (дорожки/просеки)
+        const noPlaceZones = [
+            // Центральная диагональная просека X и Z
+            { x1: -this.halfWorld, z1: -3, x2: this.halfWorld, z2: 3 },
+            { x1: -3, z1: -this.halfWorld, x2: 3, z2: this.halfWorld }
+        ];
+        const pointInZone = (x, z) => {
+            return noPlaceZones.some(zone => x >= zone.x1 && x <= zone.x2 && z >= zone.z1 && z <= zone.z2);
+        };
+
+        // Разреженное размещение деревьев и камней с минимальным расстоянием
+        const placedPoints = [];
+        const minDist = 4.0;
+        const tryPlace = (minX, maxX, minZ, maxZ) => {
+            const x = minX + Math.random() * (maxX - minX);
+            const z = minZ + Math.random() * (maxZ - minZ);
+            if (pointInZone(x, z)) return null;
+            // Избегаем центра около старта игрока
+            if (Math.hypot(x, z) < 10) return null;
+            for (const p of placedPoints) {
+                if (Math.hypot(p.x - x, p.z - z) < minDist) return null;
+            }
+            return { x, z };
+        };
+
+        const minX = -this.halfWorld + 5;
+        const maxX = this.halfWorld - 5;
+        const minZ = -this.halfWorld + 5;
+        const maxZ = this.halfWorld - 5;
+
+        // Деревья (умеренная плотность, кластеры)
+        const treeCount = 100;
+        for (let i = 0; i < treeCount; i++) {
+            const pos = tryPlace(minX, maxX, minZ, maxZ);
+            if (!pos) continue;
+            placedPoints.push(pos);
+
             const tree = new THREE.Group();
-            
-            // Создаем ствол
-            const trunkGeometry = new THREE.CylinderGeometry(0.1, 0.15, 2, 8);
+            const trunkGeometry = new THREE.CylinderGeometry(0.12, 0.18, 2.2, 8);
             const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4a2f10 });
             const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-            trunk.position.y = 1;
+            trunk.position.y = 1.1;
             tree.add(trunk);
-            
-            // Создаем крону (несколько слоев)
+
             const crownLayers = 3;
             for (let j = 0; j < crownLayers; j++) {
-                const crownGeometry = new THREE.ConeGeometry(0.8 - j * 0.2, 1.5, 8);
+                const crownGeometry = new THREE.ConeGeometry(0.9 - j * 0.22, 1.6, 8);
                 const crownMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5a27 });
                 const crown = new THREE.Mesh(crownGeometry, crownMaterial);
-                crown.position.y = 2 + j * 0.8;
+                crown.position.y = 2.1 + j * 0.85;
                 tree.add(crown);
             }
-            
-            // Случайное размещение деревьев
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 5 + Math.random() * 15;
-            tree.position.x = Math.cos(angle) * distance;
-            tree.position.z = Math.sin(angle) * distance;
-            
-            // Добавляем случайный поворот для разнообразия
+            tree.position.set(pos.x, 0, pos.z);
             tree.rotation.y = Math.random() * Math.PI;
-            
-            this.scene.add(tree);
             this.trees.push(tree);
+            addObstacle(tree, 1.2);
         }
 
-        // Добавление камней
-        for (let i = 0; i < 15; i++) {
-            const rockGeometry = new THREE.DodecahedronGeometry(0.5);
-            const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+        // Камни
+        const rockCount = 60;
+        for (let i = 0; i < rockCount; i++) {
+            const pos = tryPlace(minX, maxX, minZ, maxZ);
+            if (!pos) continue;
+            placedPoints.push(pos);
+            const rockGeometry = new THREE.DodecahedronGeometry(0.6 + Math.random() * 0.5);
+            const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 1 });
             const rock = new THREE.Mesh(rockGeometry, rockMaterial);
-            
-            // Случайное размещение камней
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 5 + Math.random() * 15;
-            rock.position.x = Math.cos(angle) * distance;
-            rock.position.z = Math.sin(angle) * distance;
-            rock.position.y = 0.25;
-            
-            this.scene.add(rock);
+            rock.position.set(pos.x, 0.25, pos.z);
             this.rocks.push(rock);
+            addObstacle(rock, 0.9);
+        }
+
+        // Ящики/баррикады как укрытия
+        const crateGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const crateMaterial = new THREE.MeshStandardMaterial({ color: 0x6b4f2a, roughness: 0.8 });
+        for (let i = 0; i < 20; i++) {
+            const pos = tryPlace(minX, maxX, minZ, maxZ);
+            if (!pos) continue;
+            const crate = new THREE.Mesh(crateGeometry, crateMaterial);
+            crate.position.set(pos.x, 0.5, pos.z);
+            addObstacle(crate, 0.8);
         }
     }
     
@@ -947,12 +1008,36 @@ class ZombieShooter {
         });
         const zombie = new THREE.Mesh(zombieGeometry, zombieMaterial);
         
-        // Случайная позиция появления
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 15 + Math.random() * 10;
-        zombie.position.x = Math.cos(angle) * distance;
-        zombie.position.z = Math.sin(angle) * distance;
-        zombie.position.y = 0.9;
+        // Случайная позиция появления в пределах карты и вне радиуса от игрока
+        const maxAttempts = 50;
+        let placed = false;
+        for (let attempt = 0; attempt < maxAttempts && !placed; attempt++) {
+            const x = -this.halfWorld + 5 + Math.random() * (this.worldSize - 10);
+            const z = -this.halfWorld + 5 + Math.random() * (this.worldSize - 10);
+            if (Math.hypot(x - this.camera.position.x, z - this.camera.position.z) < this.noSpawnRadius) continue;
+            // Не спауним внутри препятствий
+            let collides = false;
+            for (const obstacle of this.obstacles) {
+                const radius = (obstacle.userData && obstacle.userData.collisionRadius) ? obstacle.userData.collisionRadius : 1.0;
+                const d = Math.hypot(obstacle.position.x - x, obstacle.position.z - z);
+                if (d < radius + 0.8) { collides = true; break; }
+            }
+            if (collides) continue;
+            zombie.position.set(x, 0.9, z);
+            placed = true;
+        }
+        if (!placed) {
+            // Фоллбэк: спаун рядом, но в пределах границ
+            const angle = Math.random() * Math.PI * 2;
+            const distance = this.noSpawnRadius + 2 + Math.random() * 10;
+            const x = this.camera.position.x + Math.cos(angle) * distance;
+            const z = this.camera.position.z + Math.sin(angle) * distance;
+            zombie.position.set(
+                Math.max(-this.halfWorld + 2, Math.min(this.halfWorld - 2, x)),
+                0.9,
+                Math.max(-this.halfWorld + 2, Math.min(this.halfWorld - 2, z))
+            );
+        }
         
         zombie.health = 100;
         this.zombies.push(zombie);
@@ -970,13 +1055,28 @@ class ZombieShooter {
     updateZombies() {
         for (let i = this.zombies.length - 1; i >= 0; i--) {
             const zombie = this.zombies[i];
-            
+
             const direction = new THREE.Vector3();
             direction.subVectors(this.camera.position, zombie.position).normalize();
+            const oldPos = zombie.position.clone();
             zombie.position.add(direction.multiplyScalar(0.03));
-            
+
+            // Ограничение по границам карты для зомби
+            zombie.position.x = Math.max(-this.halfWorld + this.boundaryMargin, Math.min(this.halfWorld - this.boundaryMargin, zombie.position.x));
+            zombie.position.z = Math.max(-this.halfWorld + this.boundaryMargin, Math.min(this.halfWorld - this.boundaryMargin, zombie.position.z));
+
+            // Простейшие коллизии зомби с препятствиями
+            for (const obstacle of this.obstacles) {
+                const radius = (obstacle.userData && obstacle.userData.collisionRadius) ? obstacle.userData.collisionRadius : 1.0;
+                const dist = zombie.position.distanceTo(obstacle.position);
+                if (dist < radius + 0.6) { // радиус зомби ~ 0.6
+                    zombie.position.copy(oldPos);
+                    break;
+                }
+            }
+
             zombie.lookAt(this.camera.position);
-            
+
             if (zombie.position.distanceTo(this.camera.position) < 1.5) {
                 // Уменьшаем урон от зомби с учетом сопротивления
                 const damage = 0.1 * (1 - GameData.damageResistance);
@@ -1063,6 +1163,10 @@ class ZombieShooter {
             this.camera.position.add(rightVector.multiplyScalar(speed));
         }
         
+        // Ограничиваем игрока границами карты
+        this.camera.position.x = Math.max(-this.halfWorld + this.boundaryMargin, Math.min(this.halfWorld - this.boundaryMargin, this.camera.position.x));
+        this.camera.position.z = Math.max(-this.halfWorld + this.boundaryMargin, Math.min(this.halfWorld - this.boundaryMargin, this.camera.position.z));
+
         // Отслеживаем пройденное расстояние
         if (this.lastPosition) {
             const distance = this.camera.position.distanceTo(this.lastPosition);
@@ -1073,29 +1177,24 @@ class ZombieShooter {
         // Проверяем посещение углов карты
         this.checkCorners();
         
-        // Проверяем коллизии с деревьями
-        for (const tree of this.trees) {
-            const distance = this.camera.position.distanceTo(tree.position);
-            if (distance < 1.5) {
+        // Коллизии игрока со всеми препятствиями
+        for (const obstacle of this.obstacles) {
+            const radius = (obstacle.userData && obstacle.userData.collisionRadius) ? obstacle.userData.collisionRadius : 1.0;
+            const distance = this.camera.position.distanceTo(obstacle.position);
+            if (distance < radius + this.playerRadius) {
                 this.camera.position.copy(oldPosition);
-            }
-        }
-        
-        // Проверяем коллизии с камнями
-        for (const rock of this.rocks) {
-            const distance = this.camera.position.distanceTo(rock.position);
-            if (distance < 1) {
-                this.camera.position.copy(oldPosition);
+                break;
             }
         }
     }
     
     checkCorners() {
+        const edge = this.halfWorld - 10;
         const corners = [
-            { x: -40, z: -40 },
-            { x: 40, z: -40 },
-            { x: -40, z: 40 },
-            { x: 40, z: 40 }
+            { x: -edge, z: -edge },
+            { x: edge, z: -edge },
+            { x: -edge, z: edge },
+            { x: edge, z: edge }
         ];
         
         corners.forEach((corner, index) => {
